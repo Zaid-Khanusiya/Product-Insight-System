@@ -1,5 +1,4 @@
 google-genai
-boto3
 faiss-cpu
 sentence-transformers
 numpy

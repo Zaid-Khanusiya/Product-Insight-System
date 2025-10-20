@@ -4,6 +4,7 @@ import faiss
 from sentence_transformers import SentenceTransformer
 import json
 import numpy as np
+from models import *
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 gc_client = genai.Client(api_key=GOOGLE_API_KEY)
@@ -31,4 +32,17 @@ def sync_embeddings(products):
     with open("products.json", "w") as f:
         json.dump(products, f, indent=4)
 
+    return True
+
+def add_chat_to_db(data_list):
+    for data_dict in data_list:
+        new_record = ChatHistory(
+            user_id = data_dict.get('user_id'),
+            chat_id = data_dict.get('chat_id'),
+            chat_type = data_dict.get('chat_type'),
+            message = data_dict.get('message'),
+            entity_type = data_dict.get('entity_type')
+        )
+        db.session.add(new_record)
+    db.session.commit()
     return True

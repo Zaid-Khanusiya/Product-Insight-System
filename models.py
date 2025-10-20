@@ -1,4 +1,5 @@
 from database import db
+import uuid
 
 class Products(db.Model):
     __tablename__ = 'pis_products_master'
@@ -21,3 +22,12 @@ class ProductReviews(db.Model):
     rating = db.Column(db.Float)
     review_text = db.Column(db.Text, nullable=False)
     review_date = db.Column(db.DateTime, default=db.func.now())
+
+class ChatHistory(db.Model):
+    __tablename__ = 'pis_chat_history'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    chat_id = db.Column(db.String(100))
+    chat_type = db.Column(db.String(20))
+    message = db.Column(db.Text)
+    entity_type = db.Column(db.String(20))
