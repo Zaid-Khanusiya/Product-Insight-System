@@ -1,0 +1,11 @@
+google-genai
+boto3
+faiss-cpu
+sentence-transformers
+numpy
+flask
+Flask-RESTful
+flask_sqlalchemy
+psycopg2-binary
+dotenv
+flask-cors
