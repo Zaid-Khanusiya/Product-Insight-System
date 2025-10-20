@@ -1,5 +1,4 @@
 from database import db
-import uuid
 
 class Products(db.Model):
     __tablename__ = 'pis_products_master'

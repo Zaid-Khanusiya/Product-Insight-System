@@ -34,6 +34,7 @@ def sync_embeddings(products):
 
     return True
 
+
 def add_chat_to_db(data_list):
     for data_dict in data_list:
         new_record = ChatHistory(
