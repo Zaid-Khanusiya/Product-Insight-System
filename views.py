@@ -17,10 +17,10 @@ class Home(Resource):
 
 class SyncEmbeddings(Resource):
     def get(self):
-        items = Products.query.all()
+        all_products = Products.query.all()
 
         db_items_list = []
-        for item in items:
+        for item in all_products:
             db_items_list.append({'id':item.id})
 
         with open('products.json','r') as f:
@@ -33,7 +33,7 @@ class SyncEmbeddings(Resource):
         if db_items_list != json_items_list:
             print("UPDATE/SYNC NEEDED!")
             products = []
-            for item in items:
+            for item in all_products:
                 products.append({
                     'id': item.id,
                     'product_name': item.product_name,
@@ -59,34 +59,7 @@ class ExplainFeatures(Resource):
         user_prompt = json_data.get("user_prompt")
         user_id = json_data.get("user_id")
 
-        user_query_vector = sentence_transformer_model.encode([user_prompt]).astype("float32")
-        distances, indices = faiss_index.search(user_query_vector, 20)
-        
-        with open("products.json", "r") as f:
-            products = json.load(f)
-
-        top_products = [products[i] for i in indices[0]]
-        # print(top_products)
-
-        chat_context = ChatHistory.query.filter_by(user_id=user_id,chat_type='explain-features').all()
-        if chat_context:
-            context_list = []
-            for context in chat_context:
-                context_list.append({
-                    'entity_type': context.entity_type,
-                    'message': context.message
-                })
-            chat_id = context.chat_id
-            print("OLD_CHAT_ID::::::::",chat_id)
-            model_prompt = explain_features_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-        else:
-            context_list = []
-            chat_id = uuid.uuid4().hex[:12]
-            model_prompt = explain_features_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-            print("NEW_CHAT_ID::::::::",chat_id)
-        
-        # model_prompt = explain_features_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-        # print(model_prompt)
+        model_prompt, chat_id = create_chat_prompt_with_context(user_id=user_id,chat_type='explain-features',user_prompt=user_prompt)
 
         response = gc_client.models.generate_content(
             model=GOOGLE_LLM_MODEL,
@@ -121,31 +94,7 @@ class CompareProducts(Resource):
         user_prompt = json_data.get("user_prompt")
         user_id = json_data.get("user_id")
 
-        user_query_vector = sentence_transformer_model.encode([user_prompt]).astype("float32")
-        distances, indices = faiss_index.search(user_query_vector, 20)
-        
-        with open("products.json", "r") as f:
-            products = json.load(f)
-
-        top_products = [products[i] for i in indices[0]]
-        # print(top_products)
-
-        chat_context = ChatHistory.query.filter_by(user_id=user_id,chat_type='compare-products').all()
-        if chat_context:
-            context_list = []
-            for context in chat_context:
-                context_list.append({
-                    'entity_type': context.entity_type,
-                    'message': context.message
-                })
-            chat_id = context.chat_id
-            print("OLD_CHAT_ID::::::::",chat_id)
-            model_prompt = compare_products_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-        else:
-            context_list = []
-            chat_id = uuid.uuid4().hex[:12]
-            model_prompt = compare_products_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-            print("NEW_CHAT_ID::::::::",chat_id)
+        model_prompt, chat_id = create_chat_prompt_with_context(user_id=user_id,user_prompt=user_prompt,chat_type='compare-products')
         
         # print(model_prompt)
         
@@ -179,30 +128,7 @@ class GetQuotation(Resource):
         user_prompt = json_data.get("user_prompt")
         user_id = json_data.get("user_id")
 
-        user_query_vector = sentence_transformer_model.encode([user_prompt]).astype("float32")
-        distances, indices = faiss_index.search(user_query_vector, 20)
-        
-        with open("products.json", "r") as f:
-            products = json.load(f)
-
-        top_products = [products[i] for i in indices[0]]
-
-        chat_context = ChatHistory.query.filter_by(user_id=user_id,chat_type='get-quotation').all()
-        if chat_context:
-            context_list = []
-            for context in chat_context:
-                context_list.append({
-                    'entity_type': context.entity_type,
-                    'message': context.message
-                })
-            chat_id = context.chat_id
-            print("OLD_CHAT_ID::::::::",chat_id)
-            model_prompt = get_quotation_model_prompt(context=[],products=top_products,user_prompt=user_prompt)
-        else:
-            context_list = []
-            chat_id = uuid.uuid4().hex[:12]
-            model_prompt = get_quotation_model_prompt(context=[],products=top_products,user_prompt=user_prompt)
-            print("NEW_CHAT_ID::::::::",chat_id)
+        model_prompt, chat_id = create_chat_prompt_with_context(user_id=user_id,user_prompt=user_prompt,chat_type='get-quotation')
 
         # print(model_prompt)
         
@@ -236,30 +162,7 @@ class GetSpecs(Resource):
         user_prompt = json_data.get("user_prompt")
         user_id = json_data.get("user_id")
 
-        user_query_vector = sentence_transformer_model.encode([user_prompt]).astype("float32")
-        distances, indices = faiss_index.search(user_query_vector, 20)
-        
-        with open("products.json", "r") as f:
-            products = json.load(f)
-
-        top_products = [products[i] for i in indices[0]]
-
-        chat_context = ChatHistory.query.filter_by(user_id=user_id,chat_type='get-specs').all()
-        if chat_context:
-            context_list = []
-            for context in chat_context:
-                context_list.append({
-                    'entity_type': context.entity_type,
-                    'message': context.message
-                })
-            chat_id = context.chat_id
-            print("OLD_CHAT_ID::::::::",chat_id)
-            model_prompt = get_specs_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-        else:
-            context_list = []
-            chat_id = uuid.uuid4().hex[:12]
-            model_prompt = get_specs_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
-            print("NEW_CHAT_ID::::::::",chat_id)
+        model_prompt, chat_id = create_chat_prompt_with_context(user_id=user_id,user_prompt=user_prompt,chat_type='get-specs')
 
         # print(model_prompt)
         
@@ -363,3 +266,53 @@ class SummariseReviews(Resource):
         add_chat_to_db(add_chat_history_list)
 
         return response.text
+
+
+def create_chat_prompt_with_context(user_prompt,user_id,chat_type):
+    user_query_vector = sentence_transformer_model.encode([user_prompt]).astype("float32")
+    distances, indices = faiss_index.search(user_query_vector, 20)
+    
+    with open("products.json", "r") as f:
+        products = json.load(f)
+    top_products = [products[i] for i in indices[0]]
+    # print(top_products)
+    chat_context = ChatHistory.query.filter_by(user_id=user_id,chat_type=chat_type).all()
+    if chat_context:
+        context_list = []
+        for context in chat_context:
+            context_list.append({
+                'entity_type': context.entity_type,
+                'message': context.message
+            })
+        chat_id = context.chat_id
+        print("OLD_CHAT_ID::::::::",chat_id)
+
+        if chat_type == 'explain-features':
+            model_prompt = explain_features_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'get-specs':
+            model_prompt = get_specs_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'get-quotation':
+            model_prompt = get_quotation_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'compare-products':
+            model_prompt = compare_products_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        else:
+            model_prompt = ''
+
+    else:
+        context_list = ['There is no previous chat context available, this is a new chat!']
+        chat_id = uuid.uuid4().hex[:12]
+
+        if chat_type == 'explain-features':
+            model_prompt = explain_features_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'get-specs':
+            model_prompt = get_specs_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'get-quotation':
+            model_prompt = get_quotation_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        elif chat_type == 'compare-products':
+            model_prompt = compare_products_model_prompt(context=context_list,products=top_products,user_prompt=user_prompt)
+        else:
+            model_prompt = ''
+
+        print("NEW_CHAT_ID::::::::",chat_id)
+        
+        return model_prompt, chat_id
